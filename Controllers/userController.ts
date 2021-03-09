@@ -1,4 +1,3 @@
-import * as express from "express";
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 // import * as mailgunLoader from 'mailgun-js'
@@ -61,7 +60,7 @@ export const getUser = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await User.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `http://localhost:419/api/v1/user/allUsers?page=${
+      nextPage: `http://localhost:5000/api/v1/user/allUsers?page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -69,7 +68,7 @@ export const getUser = async (req: Request | any, res: Response) => {
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `http://localhost:419/api/v1/user/allUsers?page=${
+      previousPage: `http://localhost:5000/api/v1/user/allUsers?page=${
         page - 1
       }&limit=${limit}`,
     };
@@ -98,7 +97,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await User.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `http://localhost:419/api/v1/user/softDelete?page=${
+      nextPage: `http://localhost:5000/api/v1/user/softDelete?page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -106,7 +105,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `http://localhost:419/api/v1/user/softDelete?page=${
+      previousPage: `http://localhost:5000/api/v1/user/softDelete?page=${
         page - 1
       }&limit=${limit}`,
     };
@@ -114,7 +113,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
   let sorted: boolean;
   if (results) {
     results.sortedResultLink = {
-      sortedResult: `http://localhost:419/api/v1/user/softDelete?sort=true?page=${
+      sortedResult: `http://localhost:5000/api/v1/user/softDelete?sort=true?page=${
         page - 1
       }&limit=${limit}`,
     };
@@ -133,10 +132,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
     res.status(200).json({ message: success, results });
   } else {
     try {
-      results.results = await Trash.find()
-        .limit(limit)
-        .skip(startIndex)
-        .exec();
+      results.results = await Trash.find().limit(limit).skip(startIndex).exec();
     } catch (error) {
       return res.status(500).send({ message: serverError });
     }
@@ -363,7 +359,7 @@ export const resetPasswordLink = async (req: Request, res: Response) => {
     from: "no reply email",
     to: email,
     subject: "Password reset link",
-    text: `${process.env.CLIENT_URL}/reset-password/${token}`
+    text: `${process.env.CLIENT_URL}/reset-password/${token}`,
   };
 
   mailgun.messages().send(data, function (err, body) {
@@ -372,7 +368,6 @@ export const resetPasswordLink = async (req: Request, res: Response) => {
     }
     console.log(body);
   });
-  
 };
 
 //Reset password

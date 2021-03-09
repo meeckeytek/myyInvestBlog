@@ -9,13 +9,13 @@ const userRouter = Router();
 userRouter.get('/', userController.defaultRoute);
 
 // Get all users
-userRouter.get('/allUsers', paginatedResults(User, 'user', 'user'), userController.getUser);
+userRouter.get('/allUsers', userController.getUser);
 
 // Get all softDeleted Users
 userRouter.get('/softDelete', userController.softDelUsers);
 
 // Register new user
-userRouter.post('/',[
+userRouter.post('/newUser',[
     check('firstName')
     .not()
     .notEmpty(),
@@ -39,7 +39,7 @@ userRouter.get('/:userId', userController.userDetails);
 userRouter.post('/auth', userController.auth);
 
 // Edit User Details
-userRouter.patch('/:userId',[
+userRouter.patch('/editUser/:userId',[
     check('firstName')
     .not()
     .notEmpty(),

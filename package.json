@@ -4,8 +4,13 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "tsc && node app.ts",
-    "build": "tsc"
+    "clean": "rimraf dist/*",
+    "lint": "eslint . --ext .ts",
+    "tsc": "tsc",
+    "build": "npm install && npm run tsc",
+    "dev": "nodemon --watch lib/**/*.ts --exec ts-node lib/app.ts",
+    "start": "node app.js",
+    "prod": "npm run build && npm run start"
   },
   "keywords": [],
   "author": "",

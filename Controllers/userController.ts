@@ -56,8 +56,8 @@ export const defaultRoute = async (req: Request | any, res: Response) => {
 };
 // Get all users
 export const getUser = async (req: Request | any, res: Response) => {
-  const page: number = parseInt(req.query.page);
-  const limit: number = parseInt(req.query.page) || 1;
+  const page: number = parseInt(req.query.page) || 1;
+  const limit: number = parseInt(req.query.limit) || 10;
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -85,7 +85,7 @@ export const getUser = async (req: Request | any, res: Response) => {
   } catch (error) {
     return res.status(500).send({ message: serverError });
   }
-  if (!results || results.length < 0) {
+  if (!results || results.length === 0) {
     return res.status(404).send({ message: notFound });
   }
   res.status(200).json({ message: success, results });
@@ -94,7 +94,7 @@ export const getUser = async (req: Request | any, res: Response) => {
 // Get all users
 export const softDelUsers = async (req: Request | any, res: Response) => {
   const page: number = parseInt(req.query.page);
-  const limit: number = parseInt(req.query.page);
+  const limit: number = parseInt(req.query.limit);
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;

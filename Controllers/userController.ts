@@ -32,6 +32,12 @@ const inputError: any = {
   Message: "Please check all inputs for validity",
 };
 
+const alreadyExist: any = {
+  status: "Faild",
+  code: 409,
+  Message: "Already exist",
+};
+
 const newUserSuccess: any = {
   status: "Success",
   code: 201,
@@ -160,7 +166,7 @@ export const newUser = async (req: Request, res: Response) => {
   }
 
   if (existed) {
-    return res.status(422).send({ message: inputError });
+    return res.status(409).send({ message: alreadyExist });
   }
 
   let hashedPassword: any, salt: string | number;

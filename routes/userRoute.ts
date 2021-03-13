@@ -29,7 +29,7 @@ userRouter.post(
 userRouter.get("/:userId", userController.userDetails);
 
 // User Authentication
-userRouter.post("/auth", userController.auth);
+userRouter.post("/user/auth", userController.auth);
 
 // Edit User Details
 userRouter.patch(

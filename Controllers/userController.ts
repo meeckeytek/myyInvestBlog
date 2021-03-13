@@ -206,9 +206,9 @@ export const newUser = async (req: Request, res: Response) => {
   const user = new User({
     firstName,
     lastName,
-    email,
-    password: hashedPassword,
     phoneNumber,
+    email,
+    password: hashedPassword
   });
   try {
     await user.save();

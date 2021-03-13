@@ -2,7 +2,7 @@ import {Router} from 'express'
 import * as userController from '../Controllers/userController'
 import {check} from 'express-validator'
 import paginatedResults from '../middlewares/pagination';
-import User from '../models/user';
+import User from '../models/user.model';
 const userRouter = Router();
 
 //Default route
@@ -18,10 +18,10 @@ userRouter.get('/softDelete', userController.softDelUsers);
 userRouter.post('/newUser',[
     check('firstName')
     .not()
-    .notEmpty(),
+    .isEmpty(),
     check('lastName')
     .not()
-    .notEmpty(),
+    .isEmpty(),
     check('email')
     .normalizeEmail()
     .isEmail(),

@@ -3,8 +3,8 @@ import bcrypt from "bcryptjs";
 // import * as mailgunLoader from 'mailgun-js'
 import * as mailgunLoader from "mailgun-js";
 import * as jwt from "jsonwebtoken";
-import User from "../models/user";
-import Trash from "../models/trash";
+import User from "../models/user.model";
+import Trash from "../models/trash.model";
 import { validationResult } from "express-validator";
 
 //Output Messages
@@ -56,7 +56,7 @@ export const defaultRoute = async (req: Request | any, res: Response) => {
 };
 // Get all users
 export const getUser = async (req: Request | any, res: Response) => {
-  const {orderBy} = req.body
+  const { orderBy } = req.body;
   const page: number = parseInt(req.query.page) || 1;
   const limit: number = parseInt(req.query.limit) || 10;
 
@@ -125,7 +125,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
 
   const results: any = {};
 
-  if (endIndex < await User.countDocuments().exec()) {
+  if (endIndex < (await User.countDocuments().exec())) {
     results.nextPageLink = {
       nextPage: `http://localhost:5000/api/v1/user/softDelete?page=${
         page + 1
@@ -140,7 +140,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
       }&limit=${limit}`,
     };
   }
-  
+
   // let sorted: boolean;
   // if (results) {
   //   results.sortedResultLink = {
@@ -162,15 +162,15 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
   //   }
   //   res.status(200).json({ message: success, results });
   // } else {
-    try {
-      results.results = await Trash.find().limit(limit).skip(startIndex).exec();
-    } catch (error) {
-      return res.status(500).send({ message: serverError });
-    }
-    if (!results || results.length < 0) {
-      return res.status(404).send({ message: notFound });
-    }
-    res.status(200).json({ message: success, results });
+  try {
+    results.results = await Trash.find().limit(limit).skip(startIndex).exec();
+  } catch (error) {
+    return res.status(500).send({ message: serverError });
+  }
+  if (!results || results.length < 0) {
+    return res.status(404).send({ message: notFound });
+  }
+  res.status(200).json({ message: success, results });
   // }
 };
 
@@ -314,6 +314,10 @@ export const searchUser = async (req: Request, res: Response) => {
 
 //Edit user details
 export const editUser = async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ message: inputError });
+  }
   const userId = req.params.userId;
   const { firstName, lastName, phoneNumber } = req.body;
 
@@ -352,6 +356,10 @@ export const editUser = async (req: Request, res: Response) => {
 
 //Send reset password link to email
 export const resetPasswordLink = async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ message: inputError });
+  }
   const { email } = req.body;
 
   let user: string | any;
@@ -403,6 +411,10 @@ export const resetPasswordLink = async (req: Request, res: Response) => {
 
 //Reset password
 export const resetPassword = async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ message: inputError });
+  }
   const resetPasswordLink = req.params.resetLink;
   const { password } = req.body;
   let user: string | any;

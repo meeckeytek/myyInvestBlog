@@ -67,7 +67,7 @@ export const getUser = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await User.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `http://localhost:5000/api/v1/user/allUsers?page=${
+      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -75,7 +75,7 @@ export const getUser = async (req: Request | any, res: Response) => {
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `http://localhost:5000/api/v1/user/allUsers?page=${
+      previousPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?page=${
         page - 1
       }&limit=${limit}`,
     };
@@ -83,7 +83,7 @@ export const getUser = async (req: Request | any, res: Response) => {
 
   if (results) {
     results.sortedResultLink = {
-      sortedResult: `http://localhost:5000/api/v1/user/allUsers?sort=true?page=${
+      sortedResult: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?sort=true?page=${
         page - 1
       }&limit=${limit}`,
     };
@@ -127,7 +127,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await User.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `http://localhost:5000/api/v1/user/softDelete?page=${
+      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/softDelete?page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -135,7 +135,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `http://localhost:5000/api/v1/user/softDelete?page=${
+      previousPage: `https://myyinvestauth.herokuapp.com/api/v1/user/softDelete?page=${
         page - 1
       }&limit=${limit}`,
     };

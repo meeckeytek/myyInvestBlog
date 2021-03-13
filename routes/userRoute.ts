@@ -9,7 +9,7 @@ const userRouter = Router();
 userRouter.get('/', userController.defaultRoute);
 
 // Get all users
-userRouter.get('/allUsers', userController.getUser);
+userRouter.post('/allUsers', userController.getUser);
 
 // Get all softDeleted Users
 userRouter.get('/softDelete', userController.softDelUsers);

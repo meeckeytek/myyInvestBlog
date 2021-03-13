@@ -56,6 +56,7 @@ export const defaultRoute = async (req: Request | any, res: Response) => {
 };
 // Get all users
 export const getUser = async (req: Request | any, res: Response) => {
+  const {orderBy} = req.body
   const page: number = parseInt(req.query.page) || 1;
   const limit: number = parseInt(req.query.limit) || 10;
 
@@ -80,15 +81,38 @@ export const getUser = async (req: Request | any, res: Response) => {
     };
   }
 
-  try {
-    results.results = await User.find().limit(limit).skip(startIndex).exec();
-  } catch (error) {
-    return res.status(500).send({ message: serverError });
+  if (results) {
+    results.sortedResultLink = {
+      sortedResult: `http://localhost:5000/api/v1/user/allUsers?sort=true?page=${
+        page - 1
+      }&limit=${limit}`,
+    };
+
+    try {
+      results.results = await User.find()
+        .sort({ firstName: `asc` })
+        .limit(limit)
+        .skip(startIndex)
+        .exec();
+    } catch (error) {
+      // return res.status(500).send({ message: serverError });
+      return res.status(500).send({ message: console.log(error) });
+    }
+    if (!results || results.length < 0) {
+      return res.status(404).send({ message: notFound });
+    }
+    res.status(200).json({ message: success, results });
+  } else {
+    try {
+      results.results = await User.find().limit(limit).skip(startIndex).exec();
+    } catch (error) {
+      return res.status(500).send({ message: serverError });
+    }
+    if (!results || results.length < 0) {
+      return res.status(404).send({ message: notFound });
+    }
+    res.status(200).json({ message: success, results });
   }
-  if (!results || results.length === 0) {
-    return res.status(404).send({ message: notFound });
-  }
-  res.status(200).json({ message: success, results });
 };
 
 // Get all users
@@ -101,7 +125,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
 
   const results: any = {};
 
-  if (endIndex < (await User.countDocuments().exec())) {
+  if (endIndex < await User.countDocuments().exec()) {
     results.nextPageLink = {
       nextPage: `http://localhost:5000/api/v1/user/softDelete?page=${
         page + 1
@@ -116,27 +140,28 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
       }&limit=${limit}`,
     };
   }
-  let sorted: boolean;
-  if (results) {
-    results.sortedResultLink = {
-      sortedResult: `http://localhost:5000/api/v1/user/softDelete?sort=true?page=${
-        page - 1
-      }&limit=${limit}`,
-    };
-    try {
-      results.results = await Trash.find()
-        .sort({ firstName: "desc" })
-        .limit(limit)
-        .skip(startIndex)
-        .exec();
-    } catch (error) {
-      return res.status(500).send({ message: serverError });
-    }
-    if (!results || results.length < 0) {
-      return res.status(404).send({ message: notFound });
-    }
-    res.status(200).json({ message: success, results });
-  } else {
+  
+  // let sorted: boolean;
+  // if (results) {
+  //   results.sortedResultLink = {
+  //     sortedResult: `http://localhost:5000/api/v1/user/softDelete?sort=true?page=${
+  //       page - 1
+  //     }&limit=${limit}`,
+  //   };
+  //   try {
+  //     results.results = await Trash.find()
+  //       .sort({ firstName: `${orderBy}` })
+  //       .limit(limit)
+  //       .skip(startIndex)
+  //       .exec();
+  //   } catch (error) {
+  //     return res.status(500).send({ message: serverError });
+  //   }
+  //   if (!results || results.length < 0) {
+  //     return res.status(404).send({ message: notFound });
+  //   }
+  //   res.status(200).json({ message: success, results });
+  // } else {
     try {
       results.results = await Trash.find().limit(limit).skip(startIndex).exec();
     } catch (error) {
@@ -146,7 +171,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
       return res.status(404).send({ message: notFound });
     }
     res.status(200).json({ message: success, results });
-  }
+  // }
 };
 
 //Register new user

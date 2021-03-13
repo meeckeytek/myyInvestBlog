@@ -18,7 +18,7 @@ app.use('/api/v1/user', userRouter)
 mongoose
 .connect(process.env.CONNECTION!,{useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex : true,  useFindAndModify: false  })
 .then(()=>{
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8080;
 app.listen(port, () => console.log(`listening on port ${port}`))
 })
 .catch(err=>{

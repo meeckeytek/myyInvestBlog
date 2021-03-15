@@ -44,6 +44,12 @@ const newUserSuccess: any = {
   Message: "End point returned successfully",
 };
 
+const notSuccessful: any = {
+  status: "Error",
+  code: 400,
+  Message: "End point returned not successful",
+};
+
 const defaultMsg: any = {
   status: "Success",
   code: 200,
@@ -218,7 +224,8 @@ export const newUser = async (req: Request, res: Response) => {
     });
   }
   res.status(201).json({
-    message: newUserSuccess, user
+    message: newUserSuccess,
+    user,
   });
 };
 
@@ -395,18 +402,25 @@ export const resetPasswordLink = async (req: Request, res: Response) => {
 
   // const sendMail = ()=>{
   const data = {
-    from: "no reply email",
+    from: 'Excited User <me@samples.mailgun.org>',
     to: email,
     subject: "Password reset link",
     text: `${process.env.CLIENT_URL}/reset-password/${token}`,
   };
 
-  mailgun.messages().send(data, function (err, body) {
-    if (err) {
-      console.log(err);
+  user.updateOne({resetLink: token},(err: any, success: any) =>{
+    if(err){
+      return console.log(err)
     }
-    console.log(body);
-  });
+    if(success){
+      mailgun.messages().send(data,(err, body)=>{
+        if (err) {
+          return res.status(400).json(console.log(err));
+        }
+        res.status(200).json({ message: success, body, data });
+      });
+    }
+  })
 };
 
 //Reset password
@@ -419,7 +433,6 @@ export const resetPassword = async (req: Request, res: Response) => {
   const { password } = req.body;
   let user: string | any;
   try {
-    // user = await User.findOne({resetPasswordLink: resetLink})
     user = await User.findOne({ resetLink: resetPasswordLink });
   } catch (error) {
     res.status(500).json({
@@ -434,15 +447,16 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
   res.json({ user });
 
-  // user.password = password
+  user.password = password;
+  user.resetLink = '';
 
-  // try {
-  //     user.save()
-  // } catch (error) {
-  //     res.status(500).json({message: "Status: failed Code: 500 Message: Endpoint returned failed"})
-  // }
+  try {
+      user.save()
+  } catch (error) {
+      res.status(500).json({message: serverError})
+  }
 
-  // res.status(200).json({message: 'Status: Success Code: 200 Message: Endpoint returned successful'})
+  res.status(200).json({message: success})
 };
 
 //Soft delete user

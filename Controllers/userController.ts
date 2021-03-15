@@ -147,27 +147,6 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
     };
   }
 
-  // let sorted: boolean;
-  // if (results) {
-  //   results.sortedResultLink = {
-  //     sortedResult: `http://localhost:5000/api/v1/user/softDelete?sort=true?page=${
-  //       page - 1
-  //     }&limit=${limit}`,
-  //   };
-  //   try {
-  //     results.results = await Trash.find()
-  //       .sort({ firstName: `${orderBy}` })
-  //       .limit(limit)
-  //       .skip(startIndex)
-  //       .exec();
-  //   } catch (error) {
-  //     return res.status(500).send({ message: serverError });
-  //   }
-  //   if (!results || results.length < 0) {
-  //     return res.status(404).send({ message: notFound });
-  //   }
-  //   res.status(200).json({ message: success, results });
-  // } else {
   try {
     results.results = await Trash.find().limit(limit).skip(startIndex).exec();
   } catch (error) {
@@ -417,7 +396,7 @@ export const resetPasswordLink = async (req: Request, res: Response) => {
         if (err) {
           return res.status(400).json(console.log(err));
         }
-        res.status(200).json({ message: success, body, data });
+        res.status(200).json({ message: success, body });
       });
     }
   })

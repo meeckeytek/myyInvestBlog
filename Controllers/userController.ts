@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-// import * as mailgunLoader from 'mailgun-js'
 import * as mailgunLoader from "mailgun-js";
 import * as jwt from "jsonwebtoken";
 import User from "../models/user.model";
@@ -381,7 +380,7 @@ export const resetPasswordLink = async (req: Request, res: Response) => {
 
   // const sendMail = ()=>{
   const data = {
-    from: 'Excited User <me@samples.mailgun.org>',
+    from: 'no reply mail <myyinvest@gmail.com>',
     to: email,
     subject: "Password reset link",
     text: `${process.env.CLIENT_URL}/api/v1/reset-password/${token}`,

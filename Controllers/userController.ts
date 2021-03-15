@@ -405,7 +405,7 @@ export const resetPasswordLink = async (req: Request, res: Response) => {
     from: 'Excited User <me@samples.mailgun.org>',
     to: email,
     subject: "Password reset link",
-    text: `${process.env.CLIENT_URL}/reset-password/${token}`,
+    text: `${process.env.CLIENT_URL}/api/v1/reset-password/${token}`,
   };
 
   user.updateOne({resetLink: token},(err: any, success: any) =>{

@@ -426,7 +426,17 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
   res.json({ user });
 
-  user.password = password;
+  let hashedPassword: any, salt: string | number;
+  try {
+    salt = await bcrypt.genSalt(12);
+    hashedPassword = await bcrypt.hash(password, salt);
+  } catch (error) {
+    return res.status(500).send({
+      message: serverError,
+    });
+  }
+
+  user.password = hashedPassword;
   user.resetLink = '';
 
   try {

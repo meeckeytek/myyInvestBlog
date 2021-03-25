@@ -175,6 +175,7 @@ export const newPost = async (req: Request | any, res: Response) => {
       cloudinary_id: uploadedPost.public_id,
       comments: [],
       likes: [],
+      count: []
     });
     await post.save();
   } catch (error) {
@@ -391,8 +392,6 @@ export const softDeletePost = async (req: Request, res: Response) => {
     });
   }
 
-  console.log(post)
-
   const trashBlog = new Trash({
     image: post.image,
     title: post.title,
@@ -419,6 +418,7 @@ export const softDeletePost = async (req: Request, res: Response) => {
     return res.status(500).json({
       message: serverError,
     });
+    console.log(error)
   }
 
   res.status(200).json({

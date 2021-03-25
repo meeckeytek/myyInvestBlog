@@ -8,7 +8,7 @@ const trashSchema = new mongoose.Schema({
     image:{type: String},
     title:{type: String},
     body:{type: String},
-    count:{type: Number},
+    count:[{type: mongoose.Types.ObjectId, ref:'User'}],
     likes:[{type: mongoose.Types.ObjectId, ref:'User'}],
     creator:{type: mongoose.Types.ObjectId, ref:'User'},
     cloudinary_id:{type: String},

@@ -374,58 +374,57 @@ export const editPost = async (req: Request | any, res: Response) => {
 
 //Soft delete post
 export const softDeletePost = async (req: Request, res: Response) => {
-  // const postId = req.params.postId;
+  const postId = req.params.postId;
 
-  // let post: string | any;
-  // try {
-  //   post = await Blog.findById(postId);
-  // } catch (error) {
-  //   return res.status(500).json({
-  //     message: serverError,
-  //   });
-  // }
+  let post: string | any;
+  try {
+    post = await Blog.findById(postId);
+  } catch (error) {
+    return res.status(500).json({
+      message: serverError,
+    });
+  }
 
-  // if (!post || post.length === 0) {
-  //   return res.status(404).send({
-  //     message: notFound,
-  //   });
-  // }
+  if (!post || post.length === 0) {
+    return res.status(404).send({
+      message: notFound,
+    });
+  }
 
-  // console.log(post)
+  console.log(post)
 
-  // const trashBlog = new Trash({
-  //   image: post.image,
-  //   title: post.title,
-  //   body: post.body,
-  //   count: post.count,
-  //   likes: post.likes,
-  //   creator: post.creator,
-  //   cloudinary_id: post.cloudinary_id,
-  //   comments: post.comments,
-  //   deletedFrom: "Blog-Model",
-  // });
+  const trashBlog = new Trash({
+    image: post.image,
+    title: post.title,
+    body: post.body,
+    count: post.count,
+    likes: post.likes,
+    creator: post.creator,
+    cloudinary_id: post.cloudinary_id,
+    comments: post.comments,
+    deletedFrom: "Blog-Model",
+  });
 
-  // try {
-  //   await trashBlog.save();
-  // } catch (error) {
-  //   return res.status(500).json({
-  //     message: serverError,
-  //   });
-  // }
+  try {
+    await trashBlog.save();
+  } catch (error) {
+    return res.status(500).json({
+      message: serverError,
+    });
+  }
 
-  // try {
-  //   await post.remove();
-  // } catch (error) {
-  //   return res.status(500).json({
-  //     message: serverError,
-  //   });
-  // }
+  try {
+    await post.remove();
+  } catch (error) {
+    return res.status(500).json({
+      message: serverError,
+    });
+  }
 
-  // res.status(200).json({
-  //   message: success,
-  //   post,
-  // });
-  res.json({message:'welcome'})
+  res.status(200).json({
+    message: success,
+    post,
+  });
 };
 
 export const searchPost = async (req: any, res: Response, next: any) => {

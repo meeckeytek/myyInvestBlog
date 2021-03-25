@@ -61,9 +61,13 @@ export const defaultRoute = async (req: Request | any, res: Response) => {
 };
 // Get all users
 export const getUser = async (req: Request | any, res: Response) => {
-  const { orderBy } = req.body;
   const page: number = parseInt(req.query.page) || 1;
   const limit: number = parseInt(req.query.limit) || 10;
+  const sortBy = req.query.sortBy || "createdBy";
+  const orderBy = req.query.orderBy || '-1'
+  const sortQuery: any = {
+    [sortBy]: orderBy,
+  };
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -72,7 +76,7 @@ export const getUser = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await User.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?page=${
+      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?sortBy=${sortBy}&page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -80,59 +84,41 @@ export const getUser = async (req: Request | any, res: Response) => {
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?page=${
+      previousPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?sortBy=${sortBy}&page=${
         page - 1
       }&limit=${limit}`,
     };
   }
 
-  if (results) {
-    results.sortedResultLink = {
-      sortedResult: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?sort=true?page=${
-        page - 1
-      }&limit=${limit}`,
-    };
-
-    try {
-      results.results = await User.find()
-        .sort({ firstName: `asc` })
-        .limit(limit)
-        .skip(startIndex)
-        .exec();
-    } catch (error) {
-      // return res.status(500).send({ message: serverError });
-      return res.status(500).send({ message: console.log(error) });
-    }
-    if (!results || results.length < 0) {
-      return res.status(404).send({ message: notFound });
-    }
-    res.status(200).json({ message: success, results });
-  } else {
-    try {
-      results.results = await User.find().limit(limit).skip(startIndex).exec();
-    } catch (error) {
-      return res.status(500).send({ message: serverError });
-    }
-    if (!results || results.length < 0) {
-      return res.status(404).send({ message: notFound });
-    }
-    res.status(200).json({ message: success, results });
+  try {
+    results.results = await User.find().sort(sortQuery).limit(limit).skip(startIndex).exec();
+  } catch (error) {
+    return res.status(500).send({ message: serverError });
   }
+  if (!results || results.length < 0) {
+    return res.status(404).send({ message: notFound });
+  }
+  res.status(200).json({ message: success, results });
 };
 
 // Get all users
 export const softDelUsers = async (req: Request | any, res: Response) => {
   const page: number = parseInt(req.query.page);
   const limit: number = parseInt(req.query.limit);
+  const sortBy = req.query.sortBy || "createdAt";
+  const orderBy = req.query.orderBy || "-1";
+  const sortQuery: any = {
+    [sortBy]: orderBy,
+  };
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
 
   const results: any = {};
 
-  if (endIndex < (await User.countDocuments().exec())) {
+  if (endIndex < (await Trash.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/softDelete?page=${
+      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/softDelete?sortBy=${sortBy}&page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -147,7 +133,21 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
   }
 
   try {
-    results.results = await Trash.find().limit(limit).skip(startIndex).exec();
+    results.results = await Trash.find({ deletedFrom: "User-Model" })
+      .select([
+        "-image",
+        "-title",
+        "-body",
+        "-count",
+        "-likes",
+        "-creator",
+        "-cloudinary_id",
+        "-comments",
+      ])
+      .sort(sortQuery)
+      .limit(limit)
+      .skip(startIndex)
+      .exec();
   } catch (error) {
     return res.status(500).send({ message: serverError });
   }
@@ -164,7 +164,7 @@ export const newUser = async (req: Request, res: Response) => {
   if (!errors.isEmpty()) {
     return res.status(422).json({ message: inputError });
   }
-  const { firstName, lastName, email, password, phoneNumber } = req.body;
+  const { firstName, lastName, email, password, phoneNumber, isAdmin } = req.body;
 
   let existed: any;
 
@@ -192,7 +192,8 @@ export const newUser = async (req: Request, res: Response) => {
     lastName,
     phoneNumber,
     email,
-    password: hashedPassword
+    password: hashedPassword,
+    isAdmin
   });
   try {
     await user.save();
@@ -248,6 +249,7 @@ export const auth = async (req: Request, res: Response) => {
       userFirstName: user.firstName,
       userLastName: user.lastName,
       userEmail: user.email,
+      isAdmin: user.isAdmin
     },
     `${process.env.JWT_KEY}`,
     { expiresIn: "1d" }
@@ -281,20 +283,6 @@ export const userDetails = async (req: Request, res: Response) => {
     message: success,
     user,
   });
-};
-
-export const searchUser = async (req: Request, res: Response) => {
-  let user: any;
-  const userFirstName = req.query.search;
-  const regex = new RegExp(escapeRegex(req.query.userFirstName), "gi");
-  try {
-    user = await User.find({ firstName: regex });
-  } catch (error) {
-    return res.status(500).json({
-      message: serverError,
-    });
-  }
-  res.json({ user });
 };
 
 //Edit user details
@@ -378,27 +366,26 @@ export const resetPasswordLink = async (req: Request, res: Response) => {
     domain: `${process.env.DOMAIN}`,
   });
 
-  // const sendMail = ()=>{
   const data = {
-    from: 'no reply mail <myyinvest@gmail.com>',
+    from: "no reply mail <myyinvest@gmail.com>",
     to: email,
     subject: "Password reset link",
     text: `${process.env.CLIENT_URL}/api/v1/reset-password/${token}`,
   };
 
-  user.updateOne({resetLink: token},(err: any, success: any) =>{
-    if(err){
-      return console.log(err)
+  user.updateOne({ resetLink: token }, (err: any, success: any) => {
+    if (err) {
+      return console.log(err);
     }
-    if(success){
-      mailgun.messages().send(data,(err, body)=>{
+    if (success) {
+      mailgun.messages().send(data, (err, body) => {
         if (err) {
           return res.status(400).json(console.log(err));
         }
         res.status(200).json({ message: success, body });
       });
     }
-  })
+  });
 };
 
 //Reset password
@@ -436,15 +423,15 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 
   user.password = hashedPassword;
-  user.resetLink = '';
+  user.resetLink = "";
 
   try {
-      user.save()
+    user.save();
   } catch (error) {
-      res.status(500).json({message: serverError})
+    res.status(500).json({ message: serverError });
   }
 
-  res.status(200).json({message: success})
+  res.status(200).json({ message: success });
 };
 
 //Soft delete user
@@ -496,6 +483,56 @@ export const softDeleteUser = async (req: Request, res: Response) => {
   });
 };
 
-function escapeRegex(text: any) {
-  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-}
+export const searchUser = async (req: any, res: Response, next: any) => {
+  const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit);
+  const sortBy = req.query.sortBy || "createdAt";
+  const orderBy = req.query.orderBy || "-1";
+  const search = req.query.search;
+  const sortQuery = {
+    [sortBy]: orderBy,
+  };
+
+  const searchQuery = {
+    $or: [
+      { firstName: new RegExp(String(search), "i") },
+      { lastName: new RegExp(String(search), "i") }
+    ],
+  };
+
+  const retrievedCounts = await User.countDocuments();
+  User.countDocuments(searchQuery).then((usersCount) => {
+    User.find(searchQuery)
+      .sort(sortQuery)
+      .limit(limit)
+      .skip(page * limit - limit)
+      .then((user) => {
+        return res.json({
+          user,
+          pagination: {
+            hasPrevious: page > 1,
+            prevPage: page - 1,
+            hasNext: page < Math.ceil(usersCount / limit),
+            next: page + 1,
+            currentPage: Number(page),
+            total: retrievedCounts,
+            limit: limit,
+            lastPage: Math.ceil(usersCount / limit),
+          },
+          links: {
+            prevLink: `http://${
+              req.headers.host
+            }/api/v1/user/searchUser/search?search=${search}&page=${
+              page - 1
+            }&limit=${limit}`,
+            nextLink: `http://${
+              req.headers.host
+            }/api/v1/user/searchUser/search?search=${search}&page=${
+              page + 1
+            }&limit=${limit}`,
+          },
+        });
+      })
+      .catch((err) => console.log(err));
+  });
+};

@@ -43,7 +43,7 @@ userRouter.patch(
 );
 
 //Search User
-userRouter.post("/search", userController.searchUser);
+userRouter.get("/searchUser/search", userController.searchUser);
 
 // Send user reset password link
 userRouter.post(
@@ -60,6 +60,6 @@ userRouter.patch(
 );
 
 // Soft Delete User
-userRouter.delete("/softDelete/:userId", userController.softDeleteUser);
+userRouter.delete("/:userId", userController.softDeleteUser);
 
 export default userRouter;

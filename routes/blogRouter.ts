@@ -51,6 +51,6 @@ blogRouter.patch("/likePost/:postId", isAuth, blogController.likePost);
 blogRouter.get("/searchPost/search", blogController.searchPost);
 
 // Soft Delete Post
-blogRouter.delete("softDelete/:postId", isAuth, blogController.softDeletePost);
+blogRouter.delete("/:postId", isAuth, blogController.softDeletePost);
 
 export default blogRouter;

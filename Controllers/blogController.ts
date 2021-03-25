@@ -77,17 +77,17 @@ export const getAllPosts = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await Blog.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `${req.headers.host}/api/v1/user/allPosts?sortBy=${sortBy}&page=${
-        page + 1
-      }&limit=${limit}`,
+      nextPage: `${
+        req.headers.host
+      }/api/v1/user/allPosts?sortBy=${sortBy}&page=${page + 1}&limit=${limit}`,
     };
   }
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `${req.headers.host}/api/v1/user/allPosts?sortBy=${sortBy}&page=${
-        page - 1
-      }&limit=${limit}`,
+      previousPage: `${
+        req.headers.host
+      }/api/v1/user/allPosts?sortBy=${sortBy}&page=${page - 1}&limit=${limit}`,
     };
   }
 
@@ -123,7 +123,9 @@ export const softDelPosts = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await Trash.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `${req.headers.host}/api/v1/user/softDelete?sortBy=${sortBy}&page=${
+      nextPage: `${
+        req.headers.host
+      }/api/v1/user/softDelete?sortBy=${sortBy}&page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -151,7 +153,6 @@ export const softDelPosts = async (req: Request | any, res: Response) => {
     return res.status(404).send({ message: notFound });
   }
   res.status(200).json({ message: success, results });
-  
 };
 
 //Add new post
@@ -214,7 +215,9 @@ export const postDetails = async (req: Request | any, res: Response) => {
 
   if (count.length === 0) {
     try {
-      await Blog.findByIdAndUpdate(postId, { $push: { count: req.user.userId } });
+      await Blog.findByIdAndUpdate(postId, {
+        $push: { count: req.user.userId },
+      });
     } catch (error) {
       return res.status(500).json({
         message: serverError,
@@ -371,55 +374,58 @@ export const editPost = async (req: Request | any, res: Response) => {
 
 //Soft delete post
 export const softDeletePost = async (req: Request, res: Response) => {
-  const postId = req.params.postId;
+  // const postId = req.params.postId;
 
-  let post: string | any;
-  try {
-    post = await Blog.findById(postId);
-  } catch (error) {
-    return res.status(500).json({
-      message: serverError,
-    });
-  }
+  // let post: string | any;
+  // try {
+  //   post = await Blog.findById(postId);
+  // } catch (error) {
+  //   return res.status(500).json({
+  //     message: serverError,
+  //   });
+  // }
 
-  if (!post || post.length === 0) {
-    return res.status(404).send({
-      message: notFound,
-    });
-  }
+  // if (!post || post.length === 0) {
+  //   return res.status(404).send({
+  //     message: notFound,
+  //   });
+  // }
 
-  const trashUser = new Trash({
-    image: post.image,
-    title: post.title,
-    body: post.body,
-    count: post.count,
-    likes: post.likes,
-    creator: post.creator,
-    cloudinary_id: post.cloudinary_id,
-    comments: post.comments,
-    deletedFrom: "Blog-Model",
-  });
+  // console.log(post)
 
-  try {
-    await trashUser.save();
-  } catch (error) {
-    return res.status(500).json({
-      message: serverError,
-    });
-  }
+  // const trashBlog = new Trash({
+  //   image: post.image,
+  //   title: post.title,
+  //   body: post.body,
+  //   count: post.count,
+  //   likes: post.likes,
+  //   creator: post.creator,
+  //   cloudinary_id: post.cloudinary_id,
+  //   comments: post.comments,
+  //   deletedFrom: "Blog-Model",
+  // });
 
-  try {
-    post.remove();
-  } catch (error) {
-    return res.status(500).json({
-      message: serverError,
-    });
-  }
+  // try {
+  //   await trashBlog.save();
+  // } catch (error) {
+  //   return res.status(500).json({
+  //     message: serverError,
+  //   });
+  // }
 
-  res.status(200).json({
-    message: success,
-    post,
-  });
+  // try {
+  //   await post.remove();
+  // } catch (error) {
+  //   return res.status(500).json({
+  //     message: serverError,
+  //   });
+  // }
+
+  // res.status(200).json({
+  //   message: success,
+  //   post,
+  // });
+  res.json({message:'welcome'})
 };
 
 export const searchPost = async (req: any, res: Response, next: any) => {

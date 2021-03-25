@@ -470,7 +470,7 @@ export const softDeleteUser = async (req: Request, res: Response) => {
   }
 
   try {
-    user.remove();
+    await user.remove();
   } catch (error) {
     return res.status(500).json({
       message: serverError,

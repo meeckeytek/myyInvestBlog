@@ -24,7 +24,7 @@ blogRouter.post(
 );
 
 // Get single post
-blogRouter.get("/:postId", blogController.postDetails);
+blogRouter.get("/:postId", isAuth, blogController.postDetails);
 
 // Edit Post
 blogRouter.patch(

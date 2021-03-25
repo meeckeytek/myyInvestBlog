@@ -77,7 +77,7 @@ export const getAllPosts = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await Blog.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allPosts?sortBy=${sortBy}&page=${
+      nextPage: `${req.headers.host}/api/v1/user/allPosts?sortBy=${sortBy}&page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -85,7 +85,7 @@ export const getAllPosts = async (req: Request | any, res: Response) => {
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allPosts?sortBy=${sortBy}&page=${
+      previousPage: `${req.headers.host}/api/v1/user/allPosts?sortBy=${sortBy}&page=${
         page - 1
       }&limit=${limit}`,
     };
@@ -123,7 +123,7 @@ export const softDelPosts = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await Trash.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/softDelete?sortBy=${sortBy}&page=${
+      nextPage: `${req.headers.host}/api/v1/user/softDelete?sortBy=${sortBy}&page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -131,7 +131,7 @@ export const softDelPosts = async (req: Request | any, res: Response) => {
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `https://myyinvestauth.herokuapp.com/api/v1/user/softDelete?page=${
+      previousPage: `${req.headers.host}/api/v1/user/softDelete?page=${
         page - 1
       }&limit=${limit}`,
     };
@@ -151,7 +151,7 @@ export const softDelPosts = async (req: Request | any, res: Response) => {
     return res.status(404).send({ message: notFound });
   }
   res.status(200).json({ message: success, results });
-  // }
+  
 };
 
 //Add new post
@@ -186,10 +186,11 @@ export const newPost = async (req: Request | any, res: Response) => {
 };
 
 //GET single User Details
-export const postDetails = async (req: Request, res: Response) => {
+export const postDetails = async (req: Request | any, res: Response) => {
   const postId = req.params.postId;
 
-  let post: string | any;
+  let post: any;
+  let count: any;
 
   try {
     post = await Blog.findById(postId);
@@ -201,6 +202,24 @@ export const postDetails = async (req: Request, res: Response) => {
 
   if (!post || post.length === 0) {
     return res.status(404).json;
+  }
+
+  try {
+    count = await Blog.find({ count: req.user.userId });
+  } catch (error) {
+    return res.status(500).json({
+      message: serverError,
+    });
+  }
+
+  if (count.length === 0) {
+    try {
+      await Blog.findByIdAndUpdate(postId, { $push: { count: req.user.userId } });
+    } catch (error) {
+      return res.status(500).json({
+        message: serverError,
+      });
+    }
   }
 
   res.status(200).json({

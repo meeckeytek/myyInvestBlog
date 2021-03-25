@@ -76,7 +76,7 @@ export const getUser = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await User.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?sortBy=${sortBy}&page=${
+      nextPage: `${req.headers.host}/api/v1/user/allUsers?sortBy=${sortBy}&page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -84,7 +84,7 @@ export const getUser = async (req: Request | any, res: Response) => {
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `https://myyinvestauth.herokuapp.com/api/v1/user/allUsers?sortBy=${sortBy}&page=${
+      previousPage: `${req.headers.host}/api/v1/user/allUsers?sortBy=${sortBy}&page=${
         page - 1
       }&limit=${limit}`,
     };
@@ -118,7 +118,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
 
   if (endIndex < (await Trash.countDocuments().exec())) {
     results.nextPageLink = {
-      nextPage: `https://myyinvestauth.herokuapp.com/api/v1/user/softDelete?sortBy=${sortBy}&page=${
+      nextPage: `${req.headers.host}/api/v1/user/softDelete?sortBy=${sortBy}&page=${
         page + 1
       }&limit=${limit}`,
     };
@@ -126,7 +126,7 @@ export const softDelUsers = async (req: Request | any, res: Response) => {
 
   if (startIndex > 0) {
     results.previousPageLink = {
-      previousPage: `https://myyinvestauth.herokuapp.com/api/v1/user/softDelete?page=${
+      previousPage: `${req.headers.host}/api/v1/user/softDelete?page=${
         page - 1
       }&limit=${limit}`,
     };
@@ -370,7 +370,7 @@ export const resetPasswordLink = async (req: Request, res: Response) => {
     from: "no reply mail <myyinvest@gmail.com>",
     to: email,
     subject: "Password reset link",
-    text: `${process.env.CLIENT_URL}/api/v1/reset-password/${token}`,
+    text: `${req.headers.host}/api/v1/reset-password/${token}`,
   };
 
   user.updateOne({ resetLink: token }, (err: any, success: any) => {
@@ -483,6 +483,8 @@ export const softDeleteUser = async (req: Request, res: Response) => {
   });
 };
 
+
+//Search user
 export const searchUser = async (req: any, res: Response, next: any) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);

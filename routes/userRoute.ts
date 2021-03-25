@@ -60,6 +60,6 @@ userRouter.patch(
 );
 
 // Soft Delete User
-userRouter.delete("/:userId", userController.softDeleteUser);
+userRouter.delete("/softDelete/:userId", userController.softDeleteUser);
 
 export default userRouter;

@@ -1,6 +1,6 @@
 import { Response, Request } from "express";
 import * as jwt from "jsonwebtoken";
-const HttpError = require("./http-error");
+import msg from "./Messages";
 
 export const getToken = (existed: any) => {
   return jwt.sign(
@@ -48,11 +48,7 @@ export const isAuth = (req: Request | any, res: Response | any, next: any) => {
       throw new Error("You are not authorized to perform this function");
     }
   } catch (err) {
-    const error = new HttpError(
-      "You are not authorized to perform this function",
-      403
-    );
-    return next(error);
+    return res.status(403).json({ message: msg.notAuthorized });
   }
 };
 
@@ -60,10 +56,8 @@ export const isAdmin = (req: Request | any, res: Response | any, next: any) => {
   if (req.user && req.user.isAdmin) {
     next();
   } else {
-    res
-      .status(403)
-      .json({
-        message: "Only Admins are authorized to perform this operation",
-      });
+    res.status(403).json({
+      message: msg.notAdmin,
+    });
   }
 };

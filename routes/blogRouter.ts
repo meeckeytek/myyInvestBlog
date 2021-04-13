@@ -9,7 +9,7 @@ const blogRouter = Router();
 blogRouter.get("/", blogController.defaultRoute);
 
 // Get all posts
-blogRouter.get("/allPosts", blogController.getAllPosts);
+blogRouter.get("/allPosts", isAuth, blogController.getAllPosts);
 
 // Get all softDeleted Posts
 blogRouter.get("/softDelete", isAuth, isAdmin, blogController.softDelPosts);
@@ -48,7 +48,7 @@ blogRouter.patch(
 blogRouter.patch("/likePost/:postId", isAuth, blogController.likePost);
 
 //Search User
-blogRouter.get("/searchPost/search", blogController.searchPost);
+blogRouter.get("/searchPost/search", isAuth, blogController.searchPost);
 
 // Soft Delete Post
 blogRouter.delete("/softDelete/:postId", isAuth, blogController.softDeletePost);

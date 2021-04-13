@@ -1,109 +1,69 @@
 import { Request, Response } from "express";
-import path from "path";
-import User from "../models/user.model";
 import Trash from "../models/trash.model";
 import Blog from "../models/blog.model";
+import Log from "../models/logs.model";
+import msg from "../middlewares/Messages";
 import cloudinary from "../middlewares/cloudinary";
 import { validationResult } from "express-validator";
 
-//Output Messages
-const notFound: any = {
-  status: "Failed",
-  code: 404,
-  Message: "End point returned not found",
-};
-
-const alreadyExist: any = {
-  status: "Failed",
-  code: 409,
-  Message: "Already exist",
-};
-
-const serverError: any = {
-  status: "Failed",
-  code: 500,
-  Message: "Something went wrong, Please try again later",
-};
-
-const success: any = {
-  status: "Success",
-  code: 200,
-  Message: "End point returned successfully",
-};
-
-const inputError: any = {
-  status: "Failed",
-  code: 422,
-  Message: "Please check all inputs for validity",
-};
-
-const newUserSuccess: any = {
-  status: "Success",
-  code: 201,
-  Message: "End point returned successfully",
-};
-
-const notSuccessful: any = {
-  status: "Error",
-  code: 400,
-  Message: "End point returned not successful",
-};
-
-const defaultMsg: any = {
-  status: "Success",
-  code: 200,
-  Message: "Myyinvest tech intern (Blog API)",
-};
-
 // Default Route
 export const defaultRoute = async (req: Request | any, res: Response) => {
-  res.status(200).json({ message: defaultMsg });
+  res.status(200).json({ message: msg.defaultMsg });
 };
 
 // Get all posts
 export const getAllPosts = async (req: Request | any, res: Response) => {
-  const page: number = parseInt(req.query.page) || 1;
-  const limit: number = parseInt(req.query.limit) || 10;
-  const sortBy: string = req.query.sortBy || "createdAt";
-  const orderBy: any = req.query.orderBy || "-1";
-  const sortQuery: any = {
+  const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit);
+  const sortBy = req.query.sortBy || "createdAt";
+  const orderBy = req.query.orderBy || "-1";
+  const sortQuery = {
     [sortBy]: orderBy,
   };
 
-  const startIndex = (page - 1) * limit;
-  const endIndex = page * limit;
 
-  const results: any = {};
 
-  if (endIndex < (await Blog.countDocuments().exec())) {
-    results.nextPageLink = {
-      nextPage: `${
-        req.headers.host
-      }/api/v1/user/allPosts?sortBy=${sortBy}&page=${page + 1}&limit=${limit}`,
-    };
-  }
-
-  if (startIndex > 0) {
-    results.previousPageLink = {
-      previousPage: `${
-        req.headers.host
-      }/api/v1/user/allPosts?sortBy=${sortBy}&page=${page - 1}&limit=${limit}`,
-    };
-  }
-
-  try {
-    results.results = await Blog.find()
+  const retrievedCounts = await Blog.countDocuments();
+    Blog.find()
       .sort(sortQuery)
       .limit(limit)
-      .skip(startIndex)
-      .exec();
+      .skip(page * limit - limit)
+      .then((blogs) => {
+        return res.json({
+          blogs,
+          pagination: {
+            hasPrevious: page > 1,
+            prevPage: page - 1,
+            hasNext: page < Math.ceil(retrievedCounts / limit),
+            next: page + 1,
+            currentPage: Number(page),
+            total: retrievedCounts,
+            limit: limit,
+            lastPage: Math.ceil(retrievedCounts / limit),
+          },
+          links: {
+            prevLink: `http://${req.headers.host}/api/v1/user/allPosts?page=${
+              page - 1
+            }&limit=${limit}`,
+            nextLink: `http://${req.headers.host}/api/v1/user/allPosts?page=${
+              page + 1
+            }&limit=${limit}`,
+          },
+        });
+      })
+      .catch((err) => console.log(err));
+ 
+
+  const log = new Log({
+    user: req.user.userId,
+    description: "Viewed all blogs",
+  });
+
+  try {
+    await log.save();
   } catch (error) {
-    return res.status(500).send({ message: serverError });
+    return res.status(500).json({ message: msg.serverError });
   }
-  if (!results || results.length < 0) {
-    return res.status(404).send({ message: notFound });
-  }
-  res.status(200).json({ message: success, results });
 };
 
 // Get all deleted posts
@@ -147,19 +107,31 @@ export const softDelPosts = async (req: Request | any, res: Response) => {
       .skip(startIndex)
       .exec();
   } catch (error) {
-    return res.status(500).send({ message: serverError });
+    return res.status(500).send({ message: msg.serverError });
   }
   if (!results || results.length < 0) {
-    return res.status(404).send({ message: notFound });
+    return res.status(404).send({ message: msg.notFound });
   }
-  res.status(200).json({ message: success, results });
+
+  const log = new Log({
+    user: req.user.userId,
+    description: "User deleted a post and moved to trash",
+  });
+
+  try {
+    await log.save();
+  } catch (error) {
+    return res.status(500).json({ message: msg.serverError });
+  }
+
+  res.status(200).json({ message: msg.success, results });
 };
 
 //Add new post
 export const newPost = async (req: Request | any, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: inputError });
+    return res.status(422).json({ message: msg.inputError });
   }
   const { title, body } = req.body;
   let post: any;
@@ -175,14 +147,25 @@ export const newPost = async (req: Request | any, res: Response) => {
       cloudinary_id: uploadedPost.public_id,
       comments: [],
       likes: [],
-      count: []
+      count: [],
     });
     await post.save();
   } catch (error) {
     return res.status(500).send({});
   }
+
+  const log = new Log({
+    user: req.user.userId,
+    description: "User added new post",
+  });
+
+  try {
+    await log.save();
+  } catch (error) {
+    return res.status(500).json({ message: msg.serverError });
+  }
   res.status(201).json({
-    message: newUserSuccess,
+    message: msg.newInputSuccess,
     post,
   });
 };
@@ -198,7 +181,7 @@ export const postDetails = async (req: Request | any, res: Response) => {
     post = await Blog.findById(postId);
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
@@ -210,7 +193,7 @@ export const postDetails = async (req: Request | any, res: Response) => {
     count = await Blog.find({ count: req.user.userId });
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
@@ -221,13 +204,23 @@ export const postDetails = async (req: Request | any, res: Response) => {
       });
     } catch (error) {
       return res.status(500).json({
-        message: serverError,
+        message: msg.serverError,
       });
     }
   }
+  const log = new Log({
+    user: req.user.userId,
+    description: "User viewed post details",
+  });
+
+  try {
+    await log.save();
+  } catch (error) {
+    return res.status(500).json({ message: msg.serverError });
+  }
 
   res.status(200).json({
-    message: success,
+    message: msg.success,
     post,
   });
 };
@@ -236,52 +229,62 @@ export const postDetails = async (req: Request | any, res: Response) => {
 export const commentPost = async (req: Request | any, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: inputError });
+    return res.status(422).json({ message: msg.inputError });
   }
   const postId = req.params.postId;
-  const { comment } = req.body;
 
   let post: string | any;
   try {
     post = await Blog.findById(postId);
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
   if (!post || post.length === 0) {
     return res.status(404).send({
-      message: notFound,
+      message: msg.notFound,
     });
   }
 
   let newComment = {
-    comment: comment,
+    comment: req.body.comment,
     username: req.user.userLastName,
     timestamps: new Date(),
   };
 
   if (!newComment) {
-    return res.status(422).json({ message: inputError });
+    return res.status(422).json({ message: msg.inputError });
   }
 
   try {
     await Blog.findByIdAndUpdate(postId, { $push: { comments: newComment } });
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
-  res.status(200).json({ message: success });
+  const log = new Log({
+    user: req.user.userId,
+    description: "User comment on a post",
+  });
+
+  try {
+    await log.save();
+  } catch (error) {
+    return res.status(500).json({ message: msg.serverError });
+  }
+
+  res.status(200).json({ message: msg.success });
 };
 
 //Like a post
 export const likePost = async (req: Request | any, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: inputError });
+    return res.status(422).json({ message: msg.inputError });
   }
   const postId = req.params.postId;
   const { comment } = req.body;
@@ -292,13 +295,13 @@ export const likePost = async (req: Request | any, res: Response) => {
     post = await Blog.findById(postId);
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
   if (!post || post.length === 0) {
     return res.status(404).send({
-      message: notFound,
+      message: msg.notFound,
     });
   }
 
@@ -306,30 +309,41 @@ export const likePost = async (req: Request | any, res: Response) => {
     liked = await Blog.find({ likes: req.user.userId });
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
   if (!liked || liked.length > 0) {
-    return res.status(409).json({ message: alreadyExist });
+    return res.status(409).json({ message: msg.alreadyExist });
   }
 
   try {
     await Blog.findByIdAndUpdate(postId, { $push: { likes: req.user.userId } });
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
-  res.status(200).json({ message: success });
+  const log = new Log({
+    user: req.user.userId,
+    description: "User liked a post",
+  });
+
+  try {
+    await log.save();
+  } catch (error) {
+    return res.status(500).json({ message: msg.serverError });
+  }
+
+  res.status(200).json({ message: msg.success });
 };
 
 //Edit post
 export const editPost = async (req: Request | any, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: inputError });
+    return res.status(422).json({ message: msg.inputError });
   }
   const postId = req.params.postId;
   const { title, body } = req.body;
@@ -339,13 +353,13 @@ export const editPost = async (req: Request | any, res: Response) => {
     post = await Blog.findById(postId);
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
   if (!post || post.length === 0) {
     return res.status(404).send({
-      message: notFound,
+      message: msg.notFound,
     });
   }
 
@@ -363,18 +377,29 @@ export const editPost = async (req: Request | any, res: Response) => {
     await post.save();
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
+  const log = new Log({
+    user: req.user.userId,
+    description: "Admin edited a post",
+  });
+
+  try {
+    await log.save();
+  } catch (error) {
+    return res.status(500).json({ message: msg.serverError });
+  }
+
   res.status(200).json({
-    message: success,
+    message: msg.success,
     post,
   });
 };
 
 //Soft delete post
-export const softDeletePost = async (req: Request, res: Response) => {
+export const softDeletePost = async (req: Request | any, res: Response) => {
   const postId = req.params.postId;
 
   let post: string | any;
@@ -382,13 +407,13 @@ export const softDeletePost = async (req: Request, res: Response) => {
     post = await Blog.findById(postId);
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
   if (!post || post.length === 0) {
     return res.status(404).send({
-      message: notFound,
+      message: msg.notFound,
     });
   }
 
@@ -408,7 +433,7 @@ export const softDeletePost = async (req: Request, res: Response) => {
     await trashBlog.save();
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
   }
 
@@ -416,13 +441,23 @@ export const softDeletePost = async (req: Request, res: Response) => {
     await post.remove();
   } catch (error) {
     return res.status(500).json({
-      message: serverError,
+      message: msg.serverError,
     });
-    console.log(error)
+  }
+
+  const log = new Log({
+    user: req.user.userId,
+    description: "User deleted a post",
+  });
+
+  try {
+    await log.save();
+  } catch (error) {
+    return res.status(500).json({ message: msg.serverError });
   }
 
   res.status(200).json({
-    message: success,
+    message: msg.success,
     post,
   });
 };
@@ -432,7 +467,7 @@ export const searchPost = async (req: any, res: Response, next: any) => {
   const limit = parseInt(req.query.limit);
   const sortBy = req.query.sortBy || "createdAt";
   const orderBy = req.query.orderBy || "-1";
-  const search = req.query.search;
+  const search = req.query.search || "";
   const sortQuery = {
     [sortBy]: orderBy,
   };
@@ -479,4 +514,15 @@ export const searchPost = async (req: any, res: Response, next: any) => {
       })
       .catch((err) => console.log(err));
   });
+
+  const log = new Log({
+    user: req.user.userId,
+    description: "User searched a post",
+  });
+
+  try {
+    await log.save();
+  } catch (error) {
+    return res.status(500).json({ message: msg.serverError });
+  }
 };

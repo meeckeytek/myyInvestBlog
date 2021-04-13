@@ -12,5 +12,4 @@ const postSchema = new mongoose.Schema({
 },{
     timestamps: true
 })
-postSchema.index({title: 'text', body:'text'})
 export default mongoose.model('Blog', postSchema)

@@ -7,7 +7,7 @@ const logRouter = Router();
 logRouter.get("/", logsController.defaultRoute);
 
 //All logs
-logRouter.get("/allLogs", isAuth, logsController.allLogs);
+logRouter.get("/allLogs", isAuth, isAdmin, logsController.allLogs);
 
 //User logs
 logRouter.get("/userLog/:userId", isAuth, logsController.userLogs);
